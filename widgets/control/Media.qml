@@ -236,20 +236,17 @@ Item {
 
                                     // 1. La opción ideal: desktopEntry. Esto devuelve "spotify", "vlc", "org.mozilla.firefox", etc.
                                     if (mediaWidget.player.desktopEntry !== "") {
+                                        if (mediaWidget.player.desktopEntry === "zen") {
+                                            return "zen-browser"
+                                        }
                                         return mediaWidget.player.desktopEntry
                                     }
 
-                                    // 2. Respaldo: Si el reproductor no reporta desktopEntry, usamos su identidad.
-                                    // Convertimos a minúsculas y reemplazamos los espacios por guiones
-                                    // (ej. "VLC media player" -> "vlc-media-player") para intentar coincidir con algún ícono.
                                     return mediaWidget.player.identity.toLowerCase().replace(/\s+/g, '-')
                                 }
 
                                 // Le pasamos nuestro nombre calculado a la función de Quickshell
-                                source: {
-                                    console.log(mediaWidget.player.desktopEntry)    
-                                    return Quickshell.iconPath(playerIconName)
-                                }
+                                source: Quickshell.iconPath(playerIconName)
                             }
 
                             MouseArea {

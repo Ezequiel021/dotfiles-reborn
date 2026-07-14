@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import qs.widgets.control
 import Quickshell.Hyprland
 
 Scope {
