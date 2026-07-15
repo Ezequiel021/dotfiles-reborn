@@ -10,6 +10,8 @@ while true; do
     WIFI_SSID=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes' | cut -d: -f2 | head -n 1)
     if [ -z "$WIFI_SSID" ]; then
         WIFI_SSID="Desconectado"
+    else
+        WIFI_INTENSITY=$(nmcli -t -f IN-USE,SIGNAL dev wifi | grep '^\*' | cut -d: -f2)
     fi
 
     # Bluetooth: Verificamos si el controlador está encendido
@@ -20,7 +22,7 @@ while true; do
     fi
 
     # Construimos y emitimos el JSON
-    echo "{\"battery\": $BAT_CAP, \"bat_status\": \"$BAT_STAT\", \"wifi\": \"$WIFI_SSID\", \"bluetooth\": \"$BT_STAT\"}"
+    echo "{\"battery\": $BAT_CAP, \"bat_status\": \"$BAT_STAT\", \"wifi\": \"$WIFI_SSID\", \"wifi_intensity\": \"$WIFI_INTENSITY\", \"bluetooth\": \"$BT_STAT\"}"
     
     # Pausamos 3 segundos antes de volver a consultar para no consumir CPU
     sleep 3

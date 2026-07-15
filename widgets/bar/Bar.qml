@@ -64,24 +64,24 @@ Scope {
                 Rectangle {
                     color: "red"
                     radius: 8
-                    Layout .fillWidth: true
-                    Layout.margins: 5
-                    Layout.preferredHeight: 160
-
-                    System {
-                        anchors.centerIn: parent
-                    }
-                }
-
-                Rectangle {
-                    color: "red"
-                    radius: 8
 
                     Layout.fillWidth: true
                     Layout.margins: 5
                     Layout.preferredHeight: 60
                     ClockWidget {
                         anchors.centerIn: parent
+                    }
+                }
+                
+                Rectangle {
+                    color: "red"
+                    radius: 8
+                    Layout .fillWidth: true
+                    Layout.margins: 5
+                    Layout.preferredHeight: 160
+
+                    System {
+                        anchors.fill: parent
                     }
                 }
             }
