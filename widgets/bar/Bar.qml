@@ -1,6 +1,7 @@
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
+import "../theme/"
 
 // qmllint disable uncreatable-type
 Scope {
@@ -11,6 +12,8 @@ Scope {
             required property var modelData
             screen: modelData
 
+            color: Theme.background
+            
             anchors {
                 top: true
                 left: true
@@ -24,45 +27,49 @@ Scope {
                     fill: parent
                 }
 
+                // ======= Tags =======
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.margins: 5
                     Layout.preferredHeight: 300
-                    color: "red"
+                    color: Theme.primaryContainer
                     radius: 8
                     Tags {
                         anchors.centerIn: parent
                     }
                 }
 
+                // ======= Title =======
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.margins: 5
                     Layout.fillHeight: true
-                    color: "red"
+                    color: Theme.primaryContainer
                     radius: 8
                     Title {
                         anchors.centerIn: parent
                         rotation: 270
                     }
-
                 }
 
+                // ======= System tray =======
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.margins: 5
                     Layout.preferredHeight: 120
-                    color: "red"
+                    color: Theme.primaryContainer
                     radius: 8
                     Text {
                         anchors.centerIn: parent
                         rotation: 270
                         text: "systray"
+                        color: Theme.oNPrimaryContainer
                     } 
                 }
 
+                // ======= Clock =======
                 Rectangle {
-                    color: "red"
+                    color: Theme.primaryContainer
                     radius: 8
 
                     Layout.fillWidth: true
@@ -73,8 +80,9 @@ Scope {
                     }
                 }
                 
+                // ======= Hardware =======
                 Rectangle {
-                    color: "red"
+                    color: Theme.primaryContainer
                     radius: 8
                     Layout .fillWidth: true
                     Layout.margins: 5

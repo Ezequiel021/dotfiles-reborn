@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../theme"
 
 Item {
     id: windowTitleRoot
@@ -39,10 +40,11 @@ Item {
 }
 
     Text {
+        font.family: "JetBrains Mono Nerd Font"
         id: titleText
         anchors.centerIn: parent
         text: windowTitleRoot.activeTitle
-        color: "#000000"
+        color: Theme.oNPrimaryContainer
         width: 285
         elide: Text.ElideRight
     }

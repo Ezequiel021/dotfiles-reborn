@@ -1,15 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 import Quickshell.Io
 import QtQuick.Controls
+import "../theme"
 
 Item {
     id: systemTrayRoot
     width: trayLayout.width
     height: 30
-
+    
     // Propiedades reactivas para almacenar el estado
     property int batLevel: 0
     property string batStatus: "Unknown"
@@ -51,11 +51,11 @@ Item {
             Layout.fillHeight: true
         }
 
-        // --- Widget de Red ---
-        IconImage {
-            Layout.alignment: Qt.AlignHCenter // <- Esta es la magia para centrar
-            implicitSize: 25
-            source: {
+        TrayIcon {
+            Layout.alignment: Qt.AlignHCenter
+
+            // Inyectamos el ícono dinámico
+            iconSource: {
                 if (systemTrayRoot.wifiSsid === "Desconectado" || systemTrayRoot.wifiSsid === "Buscando...") {
                     return Quickshell.iconPath("network-wireless-offline-symbolic")
                 }
@@ -68,56 +68,47 @@ Item {
                 }
             }
 
-            MouseArea {
-                id: cycleMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-
-                onClicked: {
-                    // Incrementamos el índice. QML detectará el cambio y actualizará
-                    // automáticamente la portada, el título y la barra de progreso.
-                    mediaWidget.currentPlayerIndex += 1
-                }
-            }
-            ToolTip.visible: cycleMouse.containsMouse
-            ToolTip.text: systemTrayRoot.wifiSig
+            // Inyectamos el texto de la tooltip
+            tooltipText: "Red: " + systemTrayRoot.wifiSsid
+            iconColor: Theme.oNPrimaryContainer
         }
 
         // --- Widget de Bluetooth ---
-        IconImage {
+        TrayIcon {
             Layout.alignment: Qt.AlignHCenter
-            implicitSize: 25
-            // Cambia el ícono dinámicamente si está apagado
-            source: systemTrayRoot.btState === "On"
-                    ? Quickshell.iconPath("bluetooth-active-symbolic")
-                    : Quickshell.iconPath("bluetooth-disabled-symbolic")
+            iconSource: systemTrayRoot.btState === "On"
+                        ? Quickshell.iconPath("bluetooth-active-symbolic")
+                        : Quickshell.iconPath("bluetooth-disabled-symbolic")
+            tooltipText: "Bluetooth: " + (systemTrayRoot.btState === "On" ? "Encendido" : "Apagado")
+            iconColor: Theme.oNPrimaryContainer
+        }
+
+        Button {
+            background: Rectangle {
+                color: "transparent"
+            }
+            Layout.fillWidth: true
+            icon.source: systemTrayRoot.btState === "On"
+                        ? Quickshell.iconPath("bluetooth-active-symbolic")
+                        : Quickshell.iconPath("bluetooth-disabled-symbolic")
+            icon.color: Theme.oNPrimaryContainer
         }
 
         // --- Widget de Batería ---
-        // Cambié el Item por un ColumnLayout directo para manejar mejor el espacio interno
-        ColumnLayout {
+        TrayIcon {
             Layout.alignment: Qt.AlignHCenter
-            spacing: 2 // Espacio fino entre el ícono y el texto del porcentaje
-
-            IconImage {
-                Layout.alignment: Qt.AlignHCenter
-                implicitSize: 25
-                source: {
-                    // Lógica para cambiar el ícono según el nivel
-                    if (systemTrayRoot.batStatus === "Charging") return Quickshell.iconPath("battery-level-100-charged-symbolic")
-                    if (systemTrayRoot.batLevel > 80) return Quickshell.iconPath("battery-level-100-symbolic")
-                    if (systemTrayRoot.batLevel > 50) return Quickshell.iconPath("battery-level-060-symbolic")
-                    if (systemTrayRoot.batLevel > 20) return Quickshell.iconPath("battery-level-020-symbolic")
-                    return Quickshell.iconPath("battery-empty-symbolic")
-                }
+            iconSource: {
+                if (systemTrayRoot.batStatus === "Charging") return Quickshell.iconPath("battery-level-100-charged-symbolic")
+                if (systemTrayRoot.batLevel > 80) return Quickshell.iconPath("battery-level-100-symbolic")
+                if (systemTrayRoot.batLevel > 50) return Quickshell.iconPath("battery-level-060-symbolic")
+                if (systemTrayRoot.batLevel > 20) return Quickshell.iconPath("battery-level-020-symbolic")
+                return Quickshell.iconPath("battery-empty-symbolic")
             }
 
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                font.pixelSize: 12
-                text: systemTrayRoot.batLevel + "%"
-            }
+            // Tooltip detallada para la batería
+            tooltipText: "Batería: " + systemTrayRoot.batLevel + "%" +
+                         (systemTrayRoot.batStatus === "Charging" ? " (Cargando)" : "")
+            iconColor: Theme.oNPrimaryContainer
         }
 
         // Spacer inferior
