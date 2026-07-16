@@ -45,7 +45,7 @@ Scope {
                     Layout.margins: 5
                     Layout.fillHeight: true
                     color: Theme.primaryContainer
-                    radius: 8
+                    radius: 20
                     Title {
                         anchors.centerIn: parent
                         rotation: 270
@@ -53,12 +53,11 @@ Scope {
                 }
 
                 // ======= System tray =======
-                Rectangle {
+                Item {
                     Layout.fillWidth: true
                     Layout.margins: 5
-                    Layout.preferredHeight: 120
-                    color: Theme.primaryContainer
-                    radius: 8
+                    Layout.preferredHeight: 80
+                    
                     Text {
                         anchors.centerIn: parent
                         rotation: 270
@@ -70,7 +69,7 @@ Scope {
                 // ======= Clock =======
                 Rectangle {
                     color: Theme.primaryContainer
-                    radius: 8
+                    radius: 20
 
                     Layout.fillWidth: true
                     Layout.margins: 5
@@ -81,12 +80,9 @@ Scope {
                 }
                 
                 // ======= Hardware =======
-                Rectangle {
-                    color: Theme.primaryContainer
-                    radius: 8
+                Item {
                     Layout .fillWidth: true
-                    Layout.margins: 5
-                    Layout.preferredHeight: 160
+                    Layout.preferredHeight: 200
 
                     System {
                         anchors.fill: parent
