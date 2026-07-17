@@ -9,6 +9,7 @@ Scope {
         model: Quickshell.screens;
 
         PanelWindow {
+            id: panelWindow
             required property var modelData
             screen: modelData
 
@@ -28,60 +29,48 @@ Scope {
                 }
 
                 // ======= Tags =======
-                Rectangle {
+                Item {
                     Layout.fillWidth: true
-                    Layout.margins: 5
-                    Layout.preferredHeight: 300
-                    color: Theme.primaryContainer
-                    radius: 8
+                    Layout.preferredHeight: 290
+
                     Tags {
-                        anchors.centerIn: parent
+                        anchors.fill: parent
                     }
                 }
 
                 // ======= Title =======
-                Rectangle {
+                Item {
                     Layout.fillWidth: true
-                    Layout.margins: 5
                     Layout.fillHeight: true
-                    color: Theme.primaryContainer
-                    radius: 20
+
                     Title {
-                        anchors.centerIn: parent
-                        rotation: 270
+                        anchors.fill: parent
                     }
                 }
 
                 // ======= System tray =======
                 Item {
                     Layout.fillWidth: true
-                    Layout.margins: 5
                     Layout.preferredHeight: 80
-                    
-                    Text {
-                        anchors.centerIn: parent
-                        rotation: 270
-                        text: "systray"
-                        color: Theme.oNPrimaryContainer
-                    } 
+
+                    Systemtray {
+                        anchors.fill: parent
+                    }
                 }
 
                 // ======= Clock =======
-                Rectangle {
-                    color: Theme.primaryContainer
-                    radius: 20
-
+                Item {
                     Layout.fillWidth: true
-                    Layout.margins: 5
                     Layout.preferredHeight: 60
+
                     ClockWidget {
-                        anchors.centerIn: parent
+                        anchors.fill: parent
                     }
                 }
                 
                 // ======= Hardware =======
                 Item {
-                    Layout .fillWidth: true
+                    Layout.fillWidth: true
                     Layout.preferredHeight: 200
 
                     System {

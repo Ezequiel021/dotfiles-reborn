@@ -1,11 +1,21 @@
 import QtQuick
 import "../theme"
-Text {
-    color: Theme.oNPrimaryContainer
-    font {
-        family: "JetBrains Mono Nerd Font"
-        bold: true
-        pixelSize: 18
+Item {
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 5
+        color: "transparent"
+        radius: 20
     }
-    text: Time.time
+
+    Text {
+        anchors.centerIn: parent
+        color: Theme.on_surface
+        font {
+            family: "JetBrains Mono Nerd Font"
+            bold: true
+            pixelSize: 18
+        }
+        text: Time.time
+    }
 }

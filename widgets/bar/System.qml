@@ -18,9 +18,8 @@ Item {
 
     Rectangle {
         id: bgRect
-        color: Theme.primaryContainer
+        color: Theme.primary_container
 
-        // Lo anclamos al Item contenedor en todos los lados menos el derecho
         anchors {
             left: parent.left
             top: parent.top
@@ -62,9 +61,10 @@ Item {
                         let status = JSON.parse(data);
                         systemTrayRoot.batLevel = status.battery;
                         systemTrayRoot.batStatus = status.bat_status;
-                        systemTrayRoot.wifiSsid = status.wifi;
-                        systemTrayRoot.wifiSig = status.wifi_intensity
                         systemTrayRoot.btState = status.bluetooth;
+                        
+                        // INYECCIÓN MÁGICA: Pasamos el arreglo completo al widget de red
+                        wifiWidget.activeNetworks = status.networks;
                     } catch (e) {
                         console.log("Error parseando el estado del sistema:", e);
                     }
@@ -95,51 +95,33 @@ Item {
 
             Rectangle {
                 id: popupBg
-
                 x: systemTrayRoot.contentHovered ? 5 : -10
                 opacity: systemTrayRoot.contentHovered ? 1.0 : 0.0
-
+                
+                // Optimizamos la transición
                 Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
                 Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
 
-                color: Theme.primaryContainer
+                color: Theme.primary_container
                 topLeftRadius: 0
                 bottomLeftRadius: 0
                 topRightRadius: 20
                 bottomRightRadius: 20
-
-                // === LÓGICA DE ANCHO DINÁMICO ===
-                width: {
-                    if (wifi.isHovered) {
-                        return 300; // Ancho fijo e ideal para acomodar la lista de redes
-                    }
-                    // Ancho dinámico para las tooltips de texto corto (Batería y Bluetooth)
-                    return tooltipTextDisplay.implicitWidth + 24;
-                }
-
-                // Conservamos la altura intacta atada a la barra
+                
+                // === Optimización: Ancho fijo con clip ===
+                clip: true 
+                width: wifi.isHovered ? 316 : tooltipTextDisplay.implicitWidth + 24
+                Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+                
                 height: systemTrayRoot.height
-
-                // === ANIMACIÓN DE EXPANSIÓN ===
-                // Esto hace que al pasar de la batería al wifi, el panel crezca suavemente
-                Behavior on width {
-                    NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
-                }
-
-                // Línea óptica para ocultar la costura
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    width: 2
-                    color: Theme.primaryContainer
-                    visible: Theme.border !== "transparent"
-                }
 
                 Wifi {
                     id: wifiWidget
-                    // Le decimos al widget que llene por completo el nuevo ancho de 260px
-                    anchors.fill: parent
+                    // Fijamos el ancho para que no se recalcule durante la animación
+                    width: 300 
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
                     visible: wifi.isHovered
                 }
 
@@ -153,7 +135,7 @@ Item {
                         if (bluetooth.isHovered) return bluetooth.tooltipText
                         return "Error!"
                     }
-                    color: Theme.oNPrimaryContainer
+                    color: Theme.on_primary_container
 
                     font {
                         pixelSize: 16
@@ -181,22 +163,11 @@ Item {
             Layout.preferredHeight: 32
 
             // Inyectamos el ícono dinámico
-            iconSource: {
-                if (systemTrayRoot.wifiSsid === "Desconectado" || systemTrayRoot.wifiSsid === "Buscando...") {
-                    return Quickshell.iconPath("network-wireless-offline-symbolic")
-                }
-                else {
-                    if (systemTrayRoot.wifiSig > 80) return Quickshell.iconPath("network-wireless-signal-excellent-symbolic")
-                    if (systemTrayRoot.wifiSig > 60) return Quickshell.iconPath("network-wireless-signal-good-symbolic")
-                    if (systemTrayRoot.wifiSig > 40) return Quickshell.iconPath("network-wireless-signal-ok-symbolic")
-                    if (systemTrayRoot.wifiSig > 20) return Quickshell.iconPath("network-wireless-signal-weak-symbolic")
-                    else return Quickshell.iconPath("network-wireless-signal-none-symbolic")
-                }
-            }
+            iconSource: wifiWidget.panelIcon
 
             // Inyectamos el texto de la tooltip
             tooltipText: "Red: " + systemTrayRoot.wifiSsid
-            iconColor: Theme.oNPrimaryContainer
+            iconColor: Theme.on_primary_container
         }
 
         // --- Widget de Bluetooth ---
@@ -210,7 +181,7 @@ Item {
                         ? Quickshell.iconPath("bluetooth-active-symbolic")
                         : Quickshell.iconPath("bluetooth-disabled-symbolic")
             tooltipText: "Bluetooth: " + (systemTrayRoot.btState === "On" ? "Encendido" : "Apagado")
-            iconColor: Theme.oNPrimaryContainer
+            iconColor: Theme.on_primary_container
         }
 
         // --- Widget de Batería ---
@@ -230,7 +201,7 @@ Item {
             // Tooltip detallada para la batería
             tooltipText: "Batería: " + systemTrayRoot.batLevel + "%" +
                          (systemTrayRoot.batStatus === "Charging" ? " (Cargando)" : "")
-            iconColor: Theme.oNPrimaryContainer
+            iconColor: Theme.on_primary_container
         }
 
         // Spacer inferior

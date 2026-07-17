@@ -1,8 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
-import Quickshell.Io
 import Quickshell.Widgets
 import "../../theme"
 
@@ -10,115 +8,148 @@ Item {
     id: networkWidgetRoot
     anchors.margins: 8
 
-    // Propiedad reactiva para almacenar la lista de conexiones (arreglo de objetos)
+    // 1. Recibimos los datos desde System.qml
     property var activeNetworks: []
+
+    // 2. Extraemos dinámicamente las redes
+    property var ethNet: activeNetworks ? activeNetworks.find(n => n.type === "ethernet") : null
+    property var wifiNet: activeNetworks ? activeNetworks.find(n => n.type === "wifi") : null
+
+    // 3. Lógica de prioridad e intensidad para el ícono de la barra
+    property string panelIcon: {
+        if (ethNet) return Quickshell.iconPath("network-wired-symbolic")
+        
+        if (wifiNet) {
+            let sig = wifiNet.signal || 0;
+            if (sig > 80) return Quickshell.iconPath("network-wireless-signal-excellent-symbolic")
+            if (sig > 60) return Quickshell.iconPath("network-wireless-signal-good-symbolic")
+            if (sig > 40) return Quickshell.iconPath("network-wireless-signal-ok-symbolic")
+            if (sig > 20) return Quickshell.iconPath("network-wireless-signal-weak-symbolic")
+            return Quickshell.iconPath("network-wireless-signal-none-symbolic")
+        }
+        
+        return Quickshell.iconPath("network-wireless-offline-symbolic")
+    }
+    
+    property string tooltipText: {
+        if (ethNet) return "Red: " + ethNet.name
+        if (wifiNet) return "Red: " + wifiNet.name
+        return "Desconectado"
+    }
 
     Rectangle {
         anchors.fill: parent
-        color: Theme.background
+        color: Theme.surface
         radius: 15
     }
 
-    Process {
-        id: nmStream
-        command: ["bash", "/home/ramos/.config/quickshell/widgets/bar/scripts/nmstatus.sh"]
-        running: true // Agregado para asegurar que el proceso inicie
-
-        stdout: SplitParser {
-            onRead: (data) => {
-                if (data.trim() !== "") {
-                    try {
-                        // Inyectamos todo el arreglo JSON directamente al modelo
-                        networkWidgetRoot.activeNetworks = JSON.parse(data);
-                    } catch (e) {
-                        console.log("Error parseando red:", e);
-                    }
-                }
-            }
-        }
-    }
-
-    // Contenedor principal para organizar la lista
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 14 // Un poco de margen interno para que no toque los bordes del Rectangle
+        anchors.margins: 14
         spacing: 12
 
-        // Generamos un elemento visual por cada conexión activa
-        Repeater {
-            model: networkWidgetRoot.activeNetworks
+        // ==========================================
+        // TARJETA ETHERNET
+        // ==========================================
+        Rectangle {
+            radius: 12
+            color: Theme.surface_variant
+            
+            // MAGIA DE LAYOUT: Expansión horizontal y vertical
+            Layout.fillWidth: true
+            Layout.fillHeight: true 
+            
+            opacity: networkWidgetRoot.ethNet ? 1.0 : 0.5
 
-            delegate: RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                // Nombre de la red
-                Rectangle {
-                    radius: 12
-                    color: Theme.surfaceVariant
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 12
+                
+                IconImage {
+                    implicitSize: 48
+                    source: networkWidgetRoot.ethNet 
+                            ? Quickshell.iconPath("network-wired") 
+                            : Quickshell.iconPath("network-wired-offline-symbolic")
+                }
+                
+                ColumnLayout {
+                    id: ethColumn
                     Layout.fillWidth: true
-                    Layout.preferredHeight: connectionLabel.height + 20
+                    spacing: 0
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        spacing: 12
-                        IconImage {
-                            implicitSize: 40
-                            source: {
-                                if (modelData.type === "wifi")
-                                    return Quickshell.iconPath("network-wireless")
-                                else if (modelData.type === "ethernet")
-                                    return Quickshell.iconPath("network-wired")
-                            }
+                    Text {
+                        Layout.fillWidth: true
+                        text: networkWidgetRoot.ethNet ? networkWidgetRoot.ethNet.name : "Sin conexión"
+                        color: Theme.on_surface_variant
+                        font {
+                            pixelSize: 14
+                            family: "JetBrains Mono Nerd Font"
+                            bold: true
                         }
-                        ColumnLayout {
-                            id: connectionLabel
-                            Layout.fillWidth: true
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: modelData.name
-                                color: Theme.oNSurfaceVariant
-                                font {
-                                    pixelSize: 14
-                                    family: "JetBrains Mono Nerd Font"
-                                    bold: true
-                                }
-                                //elide: Text.ElideRight // Si el nombre de la red es muy largo, lo corta con "..."
-                            }
-                            Text {
-                                color: Theme.oNSurfaceVariant
-                                font {
-                                    pixelSize: 11
-                                    family: "JetBrains Mono Nerd Font"
-                                }
-                                text: modelData.device + "\n" + modelData.type
-                            }
+                    }
+                    Text {
+                        color: Theme.on_surface_variant
+                        font {
+                            pixelSize: 11
+                            family: "JetBrains Mono Nerd Font"
                         }
+                        text: networkWidgetRoot.ethNet ? (networkWidgetRoot.ethNet.device + "\n" + networkWidgetRoot.ethNet.type) : "Ethernet"
                     }
                 }
             }
         }
 
-        // Mensaje de fallback visible solo cuando el arreglo está vacío
-        Text {
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            Layout.fillHeight: true
-            visible: networkWidgetRoot.activeNetworks.length === 0
-            text: "Desconectado"
-            color: Theme.oNPrimary
-            font {
-                pixelSize: 18
-                family: "JetBrains Mono Nerd Font"
-                bold: true
-            }
-        }
+        // ==========================================
+        // TARJETA WI-FI
+        // ==========================================
+        Rectangle {
+            radius: 12
+            color: Theme.surface_variant
+            
+            // MAGIA DE LAYOUT: Expansión horizontal y vertical
+            Layout.fillWidth: true
+            Layout.fillHeight: true 
+            
+            opacity: networkWidgetRoot.wifiNet ? 1.0 : 0.5
 
-        // Spacer inferior: Empuja la lista hacia arriba si hay pocas conexiones
-        Item {
-            Layout.fillHeight: true
-            visible: networkWidgetRoot.activeNetworks.length > 0
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 12
+                
+                IconImage {
+                    implicitSize: 48
+                    source: networkWidgetRoot.wifiNet 
+                            ? Quickshell.iconPath("network-wireless") 
+                            : Quickshell.iconPath("network-wireless-offline-symbolic")
+                }
+                
+                ColumnLayout {
+                    id: wifiColumn
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: networkWidgetRoot.wifiNet ? networkWidgetRoot.wifiNet.name : "Desconectado"
+                        color: Theme.on_surface_variant
+                        font {
+                            pixelSize: 14
+                            family: "JetBrains Mono Nerd Font"
+                            bold: true
+                        }
+                    }
+                    Text {
+                        color: Theme.on_surface_variant
+                        font {
+                            pixelSize: 11
+                            family: "JetBrains Mono Nerd Font"
+                        }
+                        text: networkWidgetRoot.wifiNet ? (networkWidgetRoot.wifiNet.device + "\n" + networkWidgetRoot.wifiNet.type) : "Wi-Fi"
+                    }
+                }
+            }
         }
     }
 }
