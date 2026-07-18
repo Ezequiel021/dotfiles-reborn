@@ -53,7 +53,7 @@ Scope {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 80
 
-                    Systemtray {
+                    Tray {
                         anchors.fill: parent
                     }
                 }
