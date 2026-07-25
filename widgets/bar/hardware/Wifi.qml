@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
-import "../../theme"
+import qs.theme
 
 Item {
     id: networkWidgetRoot

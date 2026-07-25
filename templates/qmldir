@@ -1,0 +1,3 @@
+module qs.templates
+StyledText 1.0 StyledText.qml
+StyledRect 1.0 StyledRect.qml

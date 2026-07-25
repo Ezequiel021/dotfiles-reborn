@@ -1,7 +1,7 @@
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
-import "../theme/"
+import qs.theme
 
 // qmllint disable uncreatable-type
 Scope {
@@ -21,7 +21,7 @@ Scope {
                 bottom: true
             }
 
-            implicitWidth: 48
+            implicitWidth: 56
 
             ColumnLayout {
                 anchors {
@@ -33,8 +33,9 @@ Scope {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 290
 
-                    Tags {
+                    Workspaces {
                         anchors.fill: parent
+                        currentMonitor: panelWindow.modelData
                     }
                 }
 

@@ -3,7 +3,8 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import QtQuick.Controls
-import "../theme"
+import qs.theme
+import qs.tokens
 import qs.widgets.bar.hardware
 
 Item {
@@ -11,7 +12,7 @@ Item {
     height: 30
     anchors {
         fill: parent
-        margins: 5
+        margins: Tokens.containerMargins
     }
 
     property bool contentHovered: (battery.isHovered || wifi.isHovered || bluetooth.isHovered)

@@ -1,5 +1,5 @@
 import QtQuick
-import "../theme"
+import qs.theme
 Item {
     Rectangle {
         anchors.fill: parent

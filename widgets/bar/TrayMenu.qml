@@ -4,57 +4,55 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Widgets
 import qs.tokens
-import "../theme"
+import qs.theme
 
-Loader {
-    PopupWindow {
-    id: root
+StackView {
 
-    color: "transparent"
+    signal menuEntered()
+    signal menuExited()
 
-    signal closeRequested()
-    required property QsMenuHandle trayItem
-
-    implicitHeight: view.implicitHeight
-    implicitWidth: view.implicitWidth
-
-    anchor {
-        edges: Edges.Right
-        gravity: Edges.Right
+    HoverHandler {
+        id: menuHoverHandler
+        onHoveredChanged: {
+            if (hovered) {
+                view.menuEntered()
+            } else {
+                view.menuExited()
+            }
+        }
     }
 
     Rectangle {
         anchors.fill: parent
-        topRightRadius: 20
-        bottomRightRadius: 20
         color: Theme.secondary_container
+        radius: 16
     }
 
-    StackView {
-        id: view
-        implicitWidth: currentItem?.implicitWidth ?? 0
-        implicitHeight: currentItem?.implicitHeight ?? 0
+    required property QsMenuHandle trayItem
 
-        initialItem: SubMenu {
-            handle: root.trayItem
-        }
+    id: view
+    implicitWidth: currentItem?.implicitWidth ?? 0
+    implicitHeight: currentItem?.implicitHeight ?? 0
 
-        Component {
-            id: subMenuComp
-            SubMenu {}
-        }
-
-        component NoAnim: Transition {
-            NumberAnimation {
-                duration: 0
-            }
-        }
-
-        pushEnter: null
-        pushExit: null
-        popEnter: null
-        popExit: null
+    initialItem: SubMenu {
+        handle: view.trayItem
     }
+
+    Component {
+        id: subMenuComp
+        SubMenu {}
+    }
+
+    component NoAnim: Transition {
+        NumberAnimation {
+            duration: 0
+        }
+    }
+
+    pushEnter: null
+    pushExit: null
+    popEnter: null
+    popExit: null
 
     component SubMenu: Column {
         id: menu
@@ -62,7 +60,7 @@ Loader {
         required property QsMenuHandle handle
         property bool isSubMenu: false
 
-        padding: 3
+        padding: Tokens.containerMargins
         spacing: 3
 
         QsMenuOpener {
@@ -83,13 +81,12 @@ Loader {
                 required property QsMenuEntry modelData
 
                 implicitWidth: Tokens.trayMenuWidth
-
                 implicitHeight: modelData.isSeparator ? 1 : Math.max(30, label.implicitHeight + 12)
 
                 radius: 8
 
                 color: {
-                    if (modelData.isSeparator) return Theme.secondary_container;
+                    if (modelData.isSeparator) return "transparent";
                     if (itemMouse.containsMouse) return Theme.secondary;
                     return "transparent";
                 }
@@ -122,7 +119,17 @@ Loader {
                         anchors.verticalCenter: parent.verticalCenter
 
                         text: itemRect.modelData.text
-                        color: itemRect.modelData.enabled ? Theme.on_secondary_container : "gray"
+                        color: {
+                            if (itemRect.modelData.enabled) {
+                                if (itemMouse.containsMouse) {
+                                    return Theme.on_secondary
+                                } else {
+                                    return Theme.on_secondary_container
+                                }
+                            } else {
+                                return Theme.on_secondary_fixed
+                            }
+                            itemRect.modelData.enabled ? Theme.on_secondary_container : "gray"}
 
                         elide: Text.ElideRight
                     }
@@ -130,7 +137,7 @@ Loader {
                     Text {
                         id: expandIndicator
                         anchors.right: parent.right
-                        anchors.rightMargin: 8
+                        anchors.rightMargin: 16
                         anchors.verticalCenter: parent.verticalCenter
 
                         visible: itemRect.modelData.hasChildren
@@ -203,5 +210,4 @@ Loader {
             }
         }
     }
-}
 }

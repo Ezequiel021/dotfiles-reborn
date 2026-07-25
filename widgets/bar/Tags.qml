@@ -3,7 +3,8 @@ import Quickshell.Widgets
 import Quickshell
 import QtQuick.Layouts
 import Quickshell.Io
-import "../theme"
+import qs.theme
+import qs.tokens
 import QtQuick.Effects
 import QtQuick.Controls
 
@@ -37,7 +38,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: Theme.primary_container
-        anchors.margins: 5
+        anchors.margins: Tokens.containerMargins
         radius: 20
     }
 
