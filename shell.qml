@@ -4,6 +4,7 @@ import qs.widgets.bar
 import qs.widgets.osd
 import qs.widgets.control
 import qs.widgets.modules
+import qs.widgets.launcher
 
 // qmllint disable uncreatable-type
 Scope {
@@ -11,4 +12,5 @@ Scope {
     Panel {}
     Bar {}
     // Wifi {}
+    Launcher {}
 }

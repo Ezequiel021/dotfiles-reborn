@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import qs.theme
 
@@ -51,7 +51,22 @@ Item {
         font.family: "JetBrains Mono Nerd Font"
         id: titleText
         anchors.centerIn: parent
-        text: windowTitleRoot.activeTitle
+        text: {
+            if (Hyprland.focusedWorkspace.toplevels.values.length === 0)
+            {
+                return "Desktop";
+            }
+            let title = Hyprland.activeToplevel.title;
+
+            // Rules for rewritting titles
+            const codiumRegEx = /VSCodium$/
+            if (codiumRegEx.test(title)) title = "VSCodium"
+
+            const zen = /Zen Browser$/
+            if (zen.test(title)) title = "Zen Browser"
+
+            return title;
+        }
         color: Theme.on_surface
         width: 285
         elide: Text.ElideRight

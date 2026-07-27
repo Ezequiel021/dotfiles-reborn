@@ -4,58 +4,103 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import qs.tokens
 import qs.theme
-import Quickshell
 
 Item {
+    anchors.topMargin: Tokens.containerMargins
     id: root
-    required property var currentMonitor
-    Rectangle {
-        width: colLayout.implicitWidth + Tokens.containerMargins * 2
-        height: colLayout.implicitHeight + Tokens.containerMargins * 2
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: Tokens.containerMargins
-        anchors.top: parent.top
-        color: Theme.primary_container
-        anchors.margins: Tokens.containerMargins
-        radius: 20
+    property var currentMonitor 
+    
+    // Track the currently active workspace delegate to know where to move the highlight
+    property Item activeDelegate: null
 
-        Behavior on height {
-            NumberAnimation {
-                easing: Easing.OutCubic
-                duration: Tokens.expressiveAnimDuration
-            }
+    // 1. The Main Background
+    Rectangle {
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            top: parent.top
+        }
+
+        height: colLayout.implicitHeight + Tokens.containerMargins * 2
+        width: colLayout.implicitWidth + Tokens.containerMargins * 2
+
+        color: Theme.primary_container
+        radius: 20
+    }
+
+    // 2. The Sliding Highlight (Placed BEFORE the buttons so it renders behind them)
+    Rectangle {
+        id: slidingHighlight
+        width: 24
+        height: 24
+        radius: 12
+        color: Theme.primary
+        
+        // Dynamically calculate position relative to the root Item
+        x: activeDelegate ? colLayout.x + activeDelegate.x : colLayout.x
+        y: activeDelegate ? colLayout.y + activeDelegate.y : colLayout.y
+        
+        // Hide it if nothing is active on this monitor
+        opacity: activeDelegate ? 1.0 : 0.0
+        
+        // The magic happens here: Animate the Y coordinate whenever it changes
+        Behavior on y {
+            NumberAnimation { duration: 250; easing.type: Easing.OutExpo }
+        }
+        Behavior on opacity {
+            NumberAnimation { duration: 200 }
         }
     }
 
+    // 3. The Workspaces Layout
     ColumnLayout {
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 16
         id: colLayout
+        anchors {
+            top: parent.top
+            horizontalCenter: parent.horizontalCenter
+            topMargin: Tokens.containerMargins
+        }
+
         spacing: 6
 
         Repeater {
             model: Hyprland.workspaces
 
             delegate: Item {
+                id: delegateItem
+                
+                // Helper property to check if THIS specific workspace is active on THIS monitor
+                property bool isActive: modelData.active && modelData.monitor === Hyprland.monitorFor(root.currentMonitor)
 
                 visible: modelData.monitor === Hyprland.monitorFor(root.currentMonitor)
-                height: modelData.monitor === Hyprland.monitorFor(root.currentMonitor) ? 24 : 0
-                implicitWidth: 24
+                implicitHeight: visible ? 24 : 0
+                implicitWidth: visible ? 24 : 0
+
+                // When this becomes the active workspace, tell the root to track it
+                onIsActiveChanged: {
+                    if (isActive) root.activeDelegate = delegateItem
+                }
+                
+                // Catch the initial state when the widget first loads
+                Component.onCompleted: {
+                    if (isActive) root.activeDelegate = delegateItem
+                }
+                
+                // Safety check: if a workspace is destroyed while active, clear the tracker
+                Component.onDestruction: {
+                    if (root.activeDelegate === delegateItem) root.activeDelegate = null
+                }
 
                 Button {
-
                     anchors.centerIn: parent
                     anchors.fill: parent
+                    
+                    // We now only handle the URGENT state here. 
+                    // The active highlight is handled by the slidingRectangle behind this.
                     background: Rectangle {
                         radius: 12
-
-                        color: {
-                            if (modelData.urgent) return "#bf616a";
-                            if (modelData.active && modelData.monitor === Hyprland.monitorFor(root.currentMonitor)) return Theme.primary;
-                            if (modelData.client_count > 0) return "transparent";
-                            return "transparent"; 
-                        }
+                        color: "#bf616a"
+                        opacity: modelData.urgent ? 1.0 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: 200 } }
                     }
 
                     font {
@@ -64,9 +109,13 @@ Item {
                         pixelSize: 16
                     }
 
-                    palette.buttonText: (modelData.active && modelData.monitor === Hyprland.monitorFor(root.currentMonitor)) ? Theme.on_primary : Theme.on_primary_container
-
+                    palette.buttonText: delegateItem.isActive ? Theme.on_primary : Theme.on_primary_container
+                    
                     text: (modelData.active || modelData.toplevels.values.length > 0) ? modelData.id : ""
+
+                    onClicked: {
+                        modelData.activate()
+                    }
                 }
             }
         }
