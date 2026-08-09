@@ -1,0 +1,37 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shell.qml</file>
+        <file>templates/AnimatedPanel.qml</file>
+        <file>templates/AnimatedPopup.qml</file>
+        <file>templates/StyledRect.qml</file>
+        <file>templates/StyledText.qml</file>
+        <file>templates/qmldir</file>
+        <file>theme/Theme.qml</file>
+        <file>theme/Theme.json</file>
+        <file>theme/qmldir</file>
+        <file>tokens/Tokens.qml</file>
+        <file>tokens/qmldir</file>
+        <file>widgets/bar/Bar.qml</file>
+        <file>widgets/bar/Workspaces.qml</file>
+        <file>widgets/bar/WorkspacesV2.qml</file>
+        <file>widgets/bar/Tags.qml</file>
+        <file>widgets/bar/ClockWidget.qml</file>
+        <file>widgets/bar/Time.qml</file>
+        <file>widgets/bar/System.qml</file>
+        <file>widgets/bar/Title.qml</file>
+        <file>widgets/bar/Tray.qml</file>
+        <file>widgets/bar/TrayIcon.qml</file>
+        <file>widgets/bar/TrayMenu.qml</file>
+        <file>widgets/bar/hardware/Wifi.qml</file>
+        <file>widgets/bar/menus/MenuWindow.qml</file>
+        <file>widgets/control/Panel.qml</file>
+        <file>widgets/control/AppGrid.qml</file>
+        <file>widgets/control/ClockWeather.qml</file>
+        <file>widgets/control/Media.qml</file>
+        <file>widgets/launcher/Launcher.qml</file>
+        <file>widgets/osd/Volume.qml</file>
+        <file>widgets/modules/Wifi.qml</file>
+        <file>widgets/examples/Osd.qml</file>
+        <file>widgets/examples/Panel.qml</file>
+    </qresource>
+</RCC>

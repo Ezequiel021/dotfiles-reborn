@@ -1,109 +1,163 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import Quickshell
 import Quickshell.Widgets
+import qs.theme // Ensure your Theme singleton is imported
 
 Item {
     id: appListRoot
 
-    // Propiedad interna para almacenar el texto de búsqueda en minúsculas
-    property string filterText: ""
+    signal appLaunched()
+    property var filteredApps: []
 
-    // Contenedor principal vertical (Buscador arriba, Lista abajo)
+    function updateFilter() {
+        let allApps = DesktopEntries.applications.values;
+        
+        if (!allApps) {
+            filteredApps = [];
+            return;
+        }
+
+        let term = searchInput.text.toLowerCase();
+
+        if (term === "") {
+            filteredApps = allApps;
+        } else {
+            filteredApps = allApps.filter(app => 
+                app.name.toLowerCase().includes(term) ||
+                (app.genericName && app.genericName.toLowerCase().includes(term))
+            );
+        }
+        
+        listView.currentIndex = 0;
+    }
+
+    Connections {
+        target: DesktopEntries
+        function onApplicationsChanged() {
+            appListRoot.updateFilter();
+        }
+    }
+
+    Component.onCompleted: updateFilter()
+
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 15
+        anchors.margins: 16 // MD3 standard margin
+        spacing: 12
 
-        // ==========================================
-        // 1. CAJA DE BÚSQUEDA (INPUT)
-        // ==========================================
-        Rectangle {
+        TextField {
+            id: searchInput
             Layout.fillWidth: true
-            Layout.preferredHeight: 45
-            color: "#1affffff" // Fondo oscuro semi-transparente
-            radius: 10
-            border.color: searchInput.activeFocus ? "#66ffffff" : "#10ffffff"
-            border.width: 1
+            Layout.preferredHeight: 56 // MD3 standard search bar height
+            
+            placeholderText: "Search apps"
+            placeholderTextColor: Theme.on_surface_variant
+            color: Theme.on_surface
+            font.pixelSize: 16
+            
+            Component.onCompleted: forceActiveFocus()
+            selectByMouse: true
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 15
-                anchors.rightMargin: 15
-                spacing: 10
+            onTextChanged: appListRoot.updateFilter()
 
-                // Icono de lupa (puedes usar un texto o un icono de tu tema)
-                IconImage {
-                    implicitSize: 16
-                    source: Quickshell.iconPath("search-symbolic")
-                }
-
-                // El campo de texto real
-                TextInput {
-                    id: searchInput
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    color: "white"
-                    font.pixelSize: 14
-                    focus: true // El buscador roba el foco automáticamente al abrir el panel
-                    selectByMouse: true
-                    
-                    // Actualiza nuestra propiedad de filtrado en tiempo real
-                    onTextChanged: appListRoot.filterText = text.toLowerCase()
-
-                    // Texto de marcador de posición (Placeholder) cuando está vacío
-                    Text {
-                        text: "Search apps"
-                        color: "#66ffffff"
-                        font.pixelSize: 14
-                        visible: searchInput.text === ""
-                        anchors.fill: parent
-                        verticalAlignment: Text.AlignVCenter
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_Up) {
+                    listView.decrementCurrentIndex();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Down) {
+                    listView.incrementCurrentIndex();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    if (appListRoot.filteredApps && appListRoot.filteredApps.length > 0) {
+                        appListRoot.filteredApps[listView.currentIndex].execute();
+                        appListRoot.appLaunched();
                     }
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Escape) {
+                    if (text !== "") {
+                        text = "";
+                    } else {
+                        appListRoot.appLaunched();
+                    }
+                    event.accepted = true;
+                }
+            }
+
+            background: Rectangle {
+                color: Theme.surface_variant
+                radius: 28 // 56 / 2 creates the MD3 pill shape
+                border.color: searchInput.activeFocus ? Theme.primary : "transparent"
+                border.width: searchInput.activeFocus ? 2 : 0
+            }
+
+            // Left search icon
+            IconImage {
+                anchors.left: parent.left
+                anchors.leftMargin: 20
+                anchors.verticalCenter: parent.verticalCenter
+                implicitSize: 20
+                source: Quickshell.iconPath("search-symbolic")
+                // Note: If IconImage supports color tinting, uncomment the line below:
+                // color: Theme.on_surface_variant
+            }
+
+            leftPadding: 56 
+            rightPadding: 48 
+
+            // Right clear button
+            MouseArea {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 48
+                visible: searchInput.text !== ""
+                cursorShape: Qt.PointingHandCursor
+                
+                onClicked: searchInput.text = ""
+
+                IconImage {
+                    anchors.centerIn: parent
+                    implicitSize: 20
+                    source: Quickshell.iconPath("edit-clear-symbolic")
+                    opacity: 0.8 // Soften the icon slightly
+                    // color: Theme.on_surface_variant
                 }
             }
         }
 
-        // ==========================================
-        // 2. LISTA DE APLICACIONES FILTRADA
-        // ==========================================
         ListView {
+            id: listView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 6
+            spacing: 4 // Tighter spacing so the selection backgrounds flow nicely
             clip: true
-            
-            // CONECTAMOS EL MODELO:
-            // Usamos DesktopEntries.applications como base
-            model: DesktopEntries.applications
-            
+
+            model: appListRoot.filteredApps
+
             delegate: Component {
                 Item {
                     width: ListView.view.width
+                    height: 72 // MD3 standard list item height
                     
-                    // LÓGICA DE FILTRADO:
-                    // Comprobamos si el nombre o la descripción contienen el texto del buscador.
-                    // Si el buscador está vacío, se muestran todas (indexOf devuelve >= 0).
-                    readonly property bool matchesFilter: 
-                        modelData.name.toLowerCase().indexOf(appListRoot.filterText) !== -1 ||
-                        (modelData.genericName && modelData.genericName.toLowerCase().indexOf(appListRoot.filterText) !== -1)
+                    property bool isSelected: ListView.view.currentIndex === index
+                    property bool isHovered: mouseArea.containsMouse
 
-                    // Si no coincide, colapsamos la altura a 0 y lo ocultamos
-                    height: matchesFilter ? 80 : 0
-                    visible: matchesFilter
-
-                    // Tu tarjeta (Mismo diseño del paso anterior)
                     Rectangle {
                         anchors.fill: parent
-                        anchors.margins: matchesFilter ? 4 : 0 // Evita márgenes fantasma si está oculto
-                        radius: 12
-                        color: mouseArea.containsMouse ? "#25ffffff" : "#10ffffff"
-                        border.color: mouseArea.containsMouse ? "#40ffffff" : "transparent"
-                        border.width: 1
+                        // A slight margin so the highlight doesn't touch the very edge of the list
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        radius: 16 
+                        
+                        // MD3 state layer logic
+                        color: (isSelected || isHovered) ? Theme.secondary_container : "transparent"
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.margins: 12
+                            anchors.leftMargin: 16
+                            anchors.rightMargin: 16
                             spacing: 16
 
                             IconImage {
@@ -121,17 +175,19 @@ Item {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.name
-                                    color: "white"
+                                    // Match text color to the background container
+                                    color: (isSelected || isHovered) ? Theme.on_secondary_container : Theme.on_surface
                                     font.bold: true
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     elide: Text.ElideRight
                                 }
 
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.comment ? modelData.comment : "Application"
-                                    color: "#b3ffffff"
-                                    font.pixelSize: 12
+                                    color: (isSelected || isHovered) ? Theme.on_secondary_container : Theme.on_surface_variant
+                                    opacity: (isSelected || isHovered) ? 0.9 : 1.0
+                                    font.pixelSize: 14
                                     elide: Text.ElideRight
                                 }
                             }
@@ -141,9 +197,12 @@ Item {
                             id: mouseArea
                             anchors.fill: parent
                             hoverEnabled: true
+                            
+                            onEntered: ListView.view.currentIndex = index
+                            
                             onClicked: {
-                                modelData.execute()
-                                root.shouldShow = false
+                                modelData.execute();
+                                appListRoot.appLaunched();
                             }
                         }
                     }

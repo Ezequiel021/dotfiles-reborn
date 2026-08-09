@@ -104,14 +104,15 @@ Item {
                     }
 
                     font {
-                        family: "JetBrains Mono Nerd Font"
+                        family: "0xProto Nerd Font"
                         bold: true
                         pixelSize: 16
                     }
 
                     palette.buttonText: delegateItem.isActive ? Theme.on_primary : Theme.on_primary_container
                     
-                    text: (modelData.active || modelData.toplevels.values.length > 0) ? modelData.id : ""
+                    // text: (modelData.active || modelData.toplevels.values.length > 0) ? modelData.name : ""
+                    text: modelData.name
 
                     onClicked: {
                         modelData.activate()

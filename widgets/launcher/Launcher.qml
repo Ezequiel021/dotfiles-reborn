@@ -1,52 +1,41 @@
-import Quickshell
+import QtQuick
 import Quickshell.Io
-import Quickshell.Hyprland
 import qs.widgets.control
 import qs.templates
-import qs.theme
+import qs.theme // Assuming your theme modules
 import qs.tokens
+import Quickshell
 
 Scope {
-    id: root
-    property bool shouldShow: false
+    id: launcherRoot
 
+    // The IPC Handler lives at the root of the file.
+    // It will always listen for the toggle command.
     IpcHandler {
         target: "launcher"
         function toggle() {
-            root.shouldShow ^= 1;
+            launcherMenu.isOpen = !launcherMenu.isOpen;
         }
     }
 
-    LazyLoader {
-        active: root.shouldShow
-        PanelWindow {
-            id: panel
-            implicitHeight: 360
-            implicitWidth: 600
-            color: "transparent"
-            anchors.bottom: true
-            exclusionMode: ExclusionMode.Ignore
+    AnimatedPanel {
+        id: launcherMenu
+        isOpen: false
+        edge: "bottom"
+        panelWidth: 600
+        panelHeight: 360
 
-            focusable: true
-
-            HyprlandFocusGrab {
-                id: grab
-                windows: [panel]
-                active: root.shouldShow
-                onCleared: {
-                    root.shouldShow = false
-                }
-            }
-
-            StyledRect {
-                anchors.fill: parent
-                color: Theme.background
-                topLeftRadius: Tokens.fullRadius
-                topRightRadius: Tokens.fullRadius
-            }
+        // Because this Rectangle is the only unassigned object inside
+        // AnimatedPanel, QML safely routes it to the contentComponent property.
+        Rectangle {
+            color: Theme.background
+            topLeftRadius: Tokens.fullRadius
+            topRightRadius: Tokens.fullRadius
+            clip: true
 
             AppGrid {
                 anchors.fill: parent
+                onAppLaunched: launcherMenu.isOpen = false
             }
         }
     }

@@ -1,0 +1,107 @@
+import QtQuick
+import Quickshell
+import Quickshell.Hyprland // Necesario para HyprlandFocusGrab
+
+Scope {
+    id: root
+    property bool isOpen: false
+    property int popupWidth: 100
+    property int popupHeight: 100
+    property string edge: "left" // "top", "bottom", "left", "right"
+
+    default property Component contentComponent
+    property Item anchorItem
+
+    onIsOpenChanged: {
+        if (isOpen) {
+            containerLoader.activeAsync = true;
+        }
+    }
+
+    LazyLoader {
+        id: containerLoader
+        activeAsync: false
+
+        PopupWindow {
+            id: popup
+            implicitHeight: root.popupHeight
+            implicitWidth: root.popupWidth
+            color: "transparent" // Corregido para evitar un fondo blanco durante la animación
+
+            anchor.item: root.anchorItem
+            // Configuración opcional para alinear el popup en función del 'edge':
+            // anchor.edges: root.edge === "top" ? Edges.Top :
+            //               root.edge === "bottom" ? Edges.Bottom :
+            //               root.edge === "left" ? Edges.Left : Edges.Right
+
+            // Cierre automático al hacer clic fuera (igual que en AnimatedPanel)
+            HyprlandFocusGrab {
+                id: grab
+                windows: [popup]
+                active: root.isOpen
+                onCleared: {
+                    root.isOpen = false;
+                }
+            }
+
+            Item {
+                id: container
+                property bool isReady: false
+
+                width: parent.width
+                height: parent.height
+
+                property real hiddenX: root.edge === "left" ? -width : (root.edge === "right" ? width : 0)
+                property real hiddenY: root.edge === "top" ? -height : (root.edge === "bottom" ? height : 0)
+
+                state: (root.isOpen && isReady) ? "visible" : "hidden"
+
+                Component.onCompleted: {
+                    isReady = true;
+                }
+
+                states: [
+                    State {
+                        name: "visible"
+                        PropertyChanges { container.opacity: 1.0; container.x: 0; container.y: 0 }
+                    },
+                    State {
+                        name: "hidden"
+                        PropertyChanges { container.opacity: 0.0; container.x: container.hiddenX; container.y: container.hiddenY }
+                    }
+                ]
+
+                transitions: [
+                    Transition {
+                        from: "hidden"; to: "visible"
+                        NumberAnimation { properties: "x,y,opacity"; duration: 300; easing.type: Easing.OutCubic }
+                    },
+                    Transition {
+                        from: "visible"; to: "hidden"
+
+                        SequentialAnimation {
+                            NumberAnimation {
+                                properties: "x,y,opacity"
+                                duration: 250
+                                easing.type: Easing.InCubic
+                            }
+
+                            ScriptAction {
+                                script: {
+                                    if (!root.isOpen) {
+                                        containerLoader.activeAsync = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+
+                Loader {
+                    anchors.fill: parent
+                    sourceComponent: root.contentComponent
+                }
+            }
+        }
+    }
+}

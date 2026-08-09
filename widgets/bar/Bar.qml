@@ -31,9 +31,13 @@ Scope {
                 // ======= Tags =======
                 Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 290
+                    Layout.preferredHeight: 180
 
-                    Workspaces {
+                    /* Workspaces {
+                        anchors.fill: parent
+                        currentMonitor: panelWindow.modelData
+                    } */
+                    WorkspacesV2 {
                         anchors.fill: parent
                         currentMonitor: panelWindow.modelData
                     }
