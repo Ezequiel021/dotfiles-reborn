@@ -80,7 +80,7 @@ FloatingWindow {
                 // Add spacing between items if desired
                 spacing: 5
 
-                model: root.currentWifiDevice ? root.currentWifiDevice.networks : null
+                model: Bluetooth.defaultAdapter.devices
 
                 delegate: Item {
                     onAttemptingToConnectChanged: {
@@ -89,7 +89,7 @@ FloatingWindow {
                     id: networkEntry
 
                     readonly property bool attemptingToConnect: view.activeNetworkName === modelData.name
-                    
+
                     width: ListView.view.width
                     height: mainColumn.implicitHeight + 4
                     clip: true

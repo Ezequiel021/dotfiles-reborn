@@ -8,7 +8,6 @@ Scope {
     // --- Public API ---
     property bool isOpen: false
     property string edge: "bottom" // Accepts: "top", "bottom", "left", "right"
-    property bool focusable: true
     property int panelWidth: 600
     property int panelHeight: 360
 
@@ -39,15 +38,6 @@ Scope {
             anchors.bottom: root.edge === "bottom"
             anchors.left: root.edge === "left"
             anchors.right: root.edge === "right"
-
-            HyprlandFocusGrab {
-                id: grab
-                windows: [panel]
-                active: root.isOpen && root.focusable
-                onCleared: {
-                    root.isOpen = false;
-                }
-            }
 
             Item {
                 id: container

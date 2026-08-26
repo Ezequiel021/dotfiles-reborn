@@ -14,7 +14,7 @@ Scope {
             screen: modelData
 
             color: Theme.background
-            
+
             anchors {
                 top: true
                 left: true
@@ -56,7 +56,7 @@ Scope {
                 // ======= System tray =======
                 Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 80
+                    Layout.preferredHeight: 120
 
                     Tray {
                         anchors.fill: parent
@@ -72,11 +72,11 @@ Scope {
                         anchors.fill: parent
                     }
                 }
-                
+
                 // ======= Hardware =======
                 Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 200
+                    Layout.preferredHeight: 150
 
                     System {
                         anchors.fill: parent

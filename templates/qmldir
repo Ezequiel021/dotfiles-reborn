@@ -5,3 +5,5 @@ AnimatedPanel 1.0 AnimatedPanel.qml
 AnimatedPopup 1.0 AnimatedPopup.qml
 MaterialIcon 1.0 MaterialIcon.qml
 FilledSlider 1.0 FilledSlider.qml
+OverlayPanel 1.0 OverlayPanel.qml
+Elevate 1.0 Elevate.qml

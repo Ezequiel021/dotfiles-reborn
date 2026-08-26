@@ -1,150 +1,32 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Bluetooth
+import Quickshell.Networking
+import Quickshell.Services.UPower
 import Quickshell
-import Quickshell.Io
-import QtQuick.Controls
 import qs.theme
 import qs.tokens
-import qs.widgets.bar.hardware
+import qs.templates
+
+import qs.widgets.bar.system
 
 Item {
     id: systemTrayRoot
     height: 30
     anchors {
         fill: parent
-        margins: Tokens.containerMargins
     }
-
-    property bool contentHovered: (battery.isHovered || wifi.isHovered || bluetooth.isHovered)
 
     Rectangle {
         id: bgRect
         color: Theme.primary_container
 
         anchors {
-            left: parent.left
-            top: parent.top
-            bottom: parent.bottom
+            fill: parent
+            margins: Tokens.containerMargins
         }
-
-        // Si hay hover, le sumamos 5px al ancho para que toque el borde de la ventana de Quickshell
-        width: parent.width + (systemTrayRoot.contentHovered ? 5 : 0)
 
         radius: 20
-        // Aplanamos las esquinas derechas para fusionarnos con el popup
-        bottomRightRadius: systemTrayRoot.contentHovered ? 0 : 20
-        topRightRadius: systemTrayRoot.contentHovered ? 0 : 20
-
-        // Animaciones suaves para la transición geométrica
-        Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
-        Behavior on bottomRightRadius { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
-        Behavior on topRightRadius { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
-    }
-
-    // Propiedades reactivas para almacenar el estado
-    property int batLevel: 0
-    property string batStatus: "Unknown"
-    property string wifiSsid: "Buscando..."
-    property string btState: "Off"
-    property int wifiSig: 100
-    property bool activeHover: false
-
-    Process {
-        id: sysStream
-        // Asegúrate de colocar la ruta correcta hacia tu script
-        command: ["bash", "/home/ramos/.config/quickshell/widgets/bar/scripts/sys_status.sh"]
-        running: true
-
-        stdout: SplitParser {
-            onRead: (data) => {
-                if (data.trim() !== "") {
-                    try {
-                        let status = JSON.parse(data);
-                        systemTrayRoot.batLevel = status.battery;
-                        systemTrayRoot.batStatus = status.bat_status;
-                        systemTrayRoot.btState = status.bluetooth;
-                        
-                        // INYECCIÓN MÁGICA: Pasamos el arreglo completo al widget de red
-                        wifiWidget.activeNetworks = status.networks;
-                    } catch (e) {
-                        console.log("Error parseando el estado del sistema:", e);
-                    }
-                }
-            }
-        }
-    }
-
-    PopupWindow {
-        id: contextMenu
-        visible: popupBg.opacity > 0
-        color: "transparent"
-        implicitWidth: popupContainer.width
-        implicitHeight: popupContainer.height
-
-        // qmllint disable missing-type
-        anchor {
-            item: systemTrayRoot
-            edges: Edges.Right
-            gravity: Edges.Right
-        }
-        // qmllint enable missing-type
-
-        Item {
-            id: popupContainer
-            implicitWidth: popupBg.width + 5
-            implicitHeight: popupBg.height
-
-            Rectangle {
-                id: popupBg
-                x: systemTrayRoot.contentHovered ? 5 : -10
-                opacity: systemTrayRoot.contentHovered ? 1.0 : 0.0
-                
-                // Optimizamos la transición
-                Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
-                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
-
-                color: Theme.primary_container
-                topLeftRadius: 0
-                bottomLeftRadius: 0
-                topRightRadius: 20
-                bottomRightRadius: 20
-                
-                // === Optimización: Ancho fijo con clip ===
-                clip: true 
-                width: wifi.isHovered ? 316 : tooltipTextDisplay.implicitWidth + 24
-                Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
-                
-                height: systemTrayRoot.height
-
-                Wifi {
-                    id: wifiWidget
-                    // Fijamos el ancho para que no se recalcule durante la animación
-                    width: 300 
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    visible: wifi.isHovered
-                }
-
-                Text {
-                    visible: (!wifi.isHovered)
-                    id: tooltipTextDisplay
-                    anchors.centerIn: parent
-                    text: {
-                        if (battery.isHovered) return battery.tooltipText
-                        if (wifi.isHovered) return wifi.tooltipText
-                        if (bluetooth.isHovered) return bluetooth.tooltipText
-                        return "Error!"
-                    }
-                    color: Theme.on_primary_container
-
-                    font {
-                        pixelSize: 16
-                        family: "JetBrains Mono"
-                    }
-                }
-            }
-        }
     }
 
     ColumnLayout {
@@ -157,52 +39,126 @@ Item {
             Layout.fillHeight: true
         }
 
-        TrayIcon {
-            id: wifi
-            Layout.alignment: Qt.AlignHCenter
+        Item {
+            id: network
+            Layout.preferredHeight: 24
             Layout.fillWidth: true
-            Layout.preferredHeight: 32
-
-            // Inyectamos el ícono dinámico
-            iconSource: wifiWidget.panelIcon
-
-            // Inyectamos el texto de la tooltip
-            tooltipText: "Red: " + systemTrayRoot.wifiSsid
-            iconColor: Theme.on_primary_container
+            property bool ethernet: {
+                return Networking.devices.values.filter(dev => dev.state === ConnectionState.Connected && dev.type === DeviceType.Wired).size > 0;
+            }
+            property var active_wifi_device: {
+                var nw = Networking.devices.values.filter(dev => dev.state === ConnectionState.Connected && dev.type === DeviceType.Wifi)[0];
+                console.log(nw.name);
+                return nw;
+            }
+            property WifiNetwork active_wifi: {
+                return active_wifi_device.networks.values[0];
+            }
+            MaterialIcon {
+                anchors.centerIn: parent
+                source: {
+                    if (network.ethernet) {
+                        return "cable";
+                    } else {
+                        if (network.active_wifi_device.state === ConnectionState.Connected) {
+                            if (network.active_wifi.signalStrength > 0.9)
+                                return "signal_wifi_4_bar";
+                            if (network.active_wifi.signalStrength > 0.5)
+                                return "network_wifi_3_bar";
+                            if (network.active_wifi.signalStrength > 0.3)
+                                return "network_wifi_2_bar";
+                            if (network.active_wifi.signalStrength > 0.1)
+                                return "network_wifi_1_bar";
+                            else
+                                return "signal_wifi_0_bar";
+                        } else
+                            return "signal_wifi_bad";
+                    }
+                }
+                color: Theme.on_primary_container
+            }
         }
 
         // --- Widget de Bluetooth ---
-        TrayIcon {
+        Item {
             id: bluetooth
-            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredHeight: 24
             Layout.fillWidth: true
-            Layout.preferredHeight: 32
-
-            iconSource: systemTrayRoot.btState === "On"
-                        ? Quickshell.iconPath("bluetooth-active-symbolic")
-                        : Quickshell.iconPath("bluetooth-disabled-symbolic")
-            tooltipText: "Bluetooth: " + (systemTrayRoot.btState === "On" ? "Encendido" : "Apagado")
-            iconColor: Theme.on_primary_container
+            property var connectedDevices: Bluetooth.defaultAdapter.devices.values.filter(device => device.connected === true)
+            property bool connected: {
+                return connectedDevices.length > 0;
+            }
+            MaterialIcon {
+                anchors.centerIn: parent
+                source: bluetooth.connected ? "bluetooth_connected" : "bluetooth"
+                size: 24
+                color: Theme.on_primary_container
+            }
         }
 
-        // --- Widget de Batería ---
-        TrayIcon {
+        Item {
             id: battery
-            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredHeight: 24
             Layout.fillWidth: true
-            Layout.preferredHeight: 32
-            iconSource: {
-                if (systemTrayRoot.batStatus === "Charging") return Quickshell.iconPath("battery-level-100-charged-symbolic")
-                if (systemTrayRoot.batLevel > 80) return Quickshell.iconPath("battery-level-100-symbolic")
-                if (systemTrayRoot.batLevel > 50) return Quickshell.iconPath("battery-level-060-symbolic")
-                if (systemTrayRoot.batLevel > 20) return Quickshell.iconPath("battery-level-020-symbolic")
-                return Quickshell.iconPath("battery-empty-symbolic")
+            property var percentage: {
+                return Math.round(UPower.displayDevice.percentage * 100);
             }
+            MaterialIcon {
+                id: icon
+                size: 24
+                source: {
+                    if (battery.percentage > 95)
+                        return "battery_full";
+                    else if (UPower.displayDevice.state === UPowerDeviceState.Charging) {
+                        if (battery.percentage > 90)
+                            return "battery_charging_90";
+                        if (battery.percentage > 80)
+                            return "battery_charging_80";
+                        if (battery.percentage > 60)
+                            return "battery_charging_60";
+                        if (battery.percentage > 50)
+                            return "battery_charging_50";
+                        if (battery.percentage > 30)
+                            return "battery_charging_30";
+                        if (battery.percentage > 20)
+                            return "battery_charging_20";
+                        return "battery_charging_full";
+                    } else {
+                        if (battery.percentage >= 90)
+                            return "battery_6_bar";
+                        if (battery.percentage >= 80)
+                            return "battery_5_bar";
+                        if (battery.percentage >= 60)
+                            return "battery_4_bar";
+                        if (battery.percentage >= 50)
+                            return "battery_3_bar";
+                        if (battery.percentage >= 30)
+                            return "battery_2_bar";
+                        if (battery.percentage >= 20)
+                            return "battery_1_bar";
+                        return "battery_alert";
+                    }
+                }
+                color: Theme.on_primary_container
+                anchors.centerIn: parent
+            }
+        }
 
-            // Tooltip detallada para la batería
-            tooltipText: "Batería: " + systemTrayRoot.batLevel + "%" +
-                         (systemTrayRoot.batStatus === "Charging" ? " (Cargando)" : "")
-            iconColor: Theme.on_primary_container
+        AnimatedPopup {
+            id: popup
+            popupWidth: Tokens.trayMenuWidth
+            popupHeight: 400
+
+            isOpen: false
+            anchorItem: systemTrayRoot
+            contentComponent: Rectangle {
+                anchors.fill: parent
+                color: "white"
+                LazyLoader {
+                    activeAsync: popup.isOpen
+                    Battery {}
+                }
+            }
         }
 
         // Spacer inferior

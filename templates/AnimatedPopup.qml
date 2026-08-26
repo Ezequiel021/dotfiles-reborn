@@ -24,24 +24,21 @@ Scope {
 
         PopupWindow {
             id: popup
-            implicitHeight: root.popupHeight
-            implicitWidth: root.popupWidth
+            height: root.popupHeight
+            width: root.popupWidth
             color: "transparent" // Corregido para evitar un fondo blanco durante la animación
+            visible: container.isReady
 
-            anchor.item: root.anchorItem
-            // Configuración opcional para alinear el popup en función del 'edge':
-            // anchor.edges: root.edge === "top" ? Edges.Top :
-            //               root.edge === "bottom" ? Edges.Bottom :
-            //               root.edge === "left" ? Edges.Left : Edges.Right
-
-            // Cierre automático al hacer clic fuera (igual que en AnimatedPanel)
-            HyprlandFocusGrab {
-                id: grab
-                windows: [popup]
-                active: root.isOpen
-                onCleared: {
-                    root.isOpen = false;
+            anchor {
+                item: root.anchorItem
+                edges: {
+                    if (root.edge === "left") return Edges.Right
+                    if (root.edge === "right") return Edges.Left
+                    if (root.edge === "top") return Edges.Bottom
+                    if (root.edge === "bottom") return Edges.Top
+                    return Edges.Right
                 }
+                gravity: Edges.Right
             }
 
             Item {

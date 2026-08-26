@@ -6,7 +6,6 @@ import qs.theme
 
 Scope {
     id: root
-
     // Bind the pipewire node so its volume will be tracked
     PwObjectTracker {
         objects: [Pipewire.defaultAudioSink]
@@ -34,7 +33,7 @@ Scope {
         onTriggered: root.shouldShowOsd = false
     }
 
-    AnimatedPanel {
+    OverlayPanel {
         isOpen: root.shouldShowOsd
         edge: "top"
         panelWidth: 300
@@ -50,6 +49,7 @@ Scope {
                 anchors.fill: parent
                 anchors.margins: 12
                 anchors.topMargin: 8
+                icon: "volume_up"
 
                 value: 100 * (Pipewire.defaultAudioSink?.audio.volume?? 0)
             }

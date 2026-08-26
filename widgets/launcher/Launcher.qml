@@ -4,6 +4,7 @@ import qs.widgets.control
 import qs.templates
 import qs.theme // Assuming your theme modules
 import qs.tokens
+import Quickshell.Hyprland
 import Quickshell
 
 Scope {

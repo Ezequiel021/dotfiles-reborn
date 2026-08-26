@@ -1,4 +1,3 @@
-
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -33,14 +32,18 @@ Item {
 
     ColumnLayout {
         anchors.centerIn: parent
-
+        anchors.fill: parent
+        Item {
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+        }
         Repeater {
             model: SystemTray.items
 
             delegate: Item {
                 id: trayDelegate
                 implicitHeight: 32
-                implicitWidth: 32
+                Layout.fillWidth: true
 
                 property var trayItem: modelData
 
@@ -61,7 +64,7 @@ Item {
                     // 2. Lógica al entrar el cursor (Hover)
                     onEntered: {
                         globalHideTimer.stop() // Frena el cierre si regresas al icono
-                        
+
                         if (systemTrayRoot.activeMenu !== modelData.menu || !systemTrayRoot.isMenuShown) {
                             systemTrayRoot.activeMenu = modelData.menu;
                             systemTrayRoot.activeAnchorItem = trayDelegate
@@ -84,22 +87,15 @@ Item {
     }
 
     AnimatedPopup {
-        id: trayMenuPopup
-        isOpen: systemTrayRoot.isMenuShown
+        edge: "left"
         anchorItem: systemTrayRoot.activeAnchorItem
-        TrayMenu {
-                    anchors.centerIn: parent
-                    id: trayMenu
-                    property bool isDataReady: dbusFetcher.children && dbusFetcher.children.values.length > 0
-                    trayItem: systemTrayRoot.activeMenu
-
-                    visible: systemTrayRoot.activeMenu !== null
-
-                    // Cuando el usuario entra al menú flotante, cancelamos el cierre
-                    onMenuEntered: globalHideTimer.stop()
-                    
-                    // Si el usuario sale del menú flotante, iniciamos el cierre
-                    onMenuExited: globalHideTimer.start()
-                }
+        isOpen: systemTrayRoot.isMenuShown
+        popupWidth: Tokens.trayMenuWidth
+        popupHeight: 500
+        TrayMenuV2 {
+            trayItem: systemTrayRoot.activeMenu
+            onMenuEntered: globalHideTimer.stop()
+            onMenuExited: globalHideTimer.start()
+        }
     }
 }

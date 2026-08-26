@@ -3,6 +3,7 @@ import QtQuick
 import qs.theme
 
 Slider {
+    required property string icon
     id: root
     handle: Item {
         x: root.visualPosition * (root.availableWidth - width)
@@ -17,7 +18,14 @@ Slider {
                 anchors.centerIn: parent
                 font.pixelSize: 20
                 color: Theme.on_primary
-                source: "volume_up"
+                source: root.icon
+            }
+        }
+
+        Behavior on x {
+            NumberAnimation {
+                easing: Easing.OutCubic
+                duration: 100
             }
         }
     }
